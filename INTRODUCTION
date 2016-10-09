@@ -1,0 +1,8 @@
+# Image Display Windows
+Embedded Computing 
+OBJECTIVE
+    To display an image by memory formatting image data.
+INPUT DATA
+    The image files used are bridge.ppm and retina.ppm
+DESCRIPTION
+    The images is displayed using 16-bit techniques.A colormap is used for greyscale display, and your choice of either colormap or 16-bit pixel values for color display.
