@@ -1,0 +1,170 @@
+/*PATRICIA MONICA GEORGE
+%EMBEDDED COMPUTING
+%IMAGE DISPLAY WINDOWS
+
+#define _CRT_SECURE_NO_DEPRECATE
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+WNDCLASS		wc;
+HWND			WindowHandle;
+int			ROWS,COLS;
+unsigned char	*displaydata;
+BITMAPINFO		*bm_info;
+HDC			hDC;
+HINSTANCE hInstance;
+HINSTANCE hPrevInstance;
+LPSTR     lpCmdLine;
+int nCmdShow;
+FILE		*fpt;
+unsigned char	*image;
+char		header[80];
+int		BYTES;
+int i,j,k;
+
+LRESULT CALLBACK EventProcessor (HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
+{ return(DefWindowProc(hWnd,uMsg,wParam,lParam)); }
+
+int main(int argc, char *argv[])
+{
+	/* open image for reading */
+	fpt=fopen(argv[1],"rb");
+	fscanf(fpt,"%s %d %d %d",header,&COLS,&ROWS,&BYTES);
+	printf("\n The image being displayed is %s. \n ROWS: %d \n COLUMNS: %d\n",argv[1],ROWS,COLS);
+
+	
+	if(header[1]=='5')//8 BIT GREYSCALE TO 8 BIT COLORMAP
+	{
+	image=(unsigned char *)malloc(ROWS*COLS);
+	header[50]=fgetc(fpt);
+	fread(image,ROWS*COLS,1,fpt);
+	displaydata=(unsigned char *)malloc(ROWS*COLS);
+	}
+	if(header[1]=='6')//8 BIT GREYSCALE TO 8 BIT COLORMAP
+	{
+	image=(unsigned char *)malloc(ROWS*COLS*3*sizeof(unsigned char*));
+	header[50]=fgetc(fpt);
+	fread(image,1,ROWS*COLS*3,fpt);
+	displaydata=(unsigned char *)malloc(ROWS*COLS*2*sizeof(unsigned char*));
+	}
+	fclose(fpt);
+
+
+	if(header[1]=='5')//8 BIT GREYSCALE TO 8 BIT COLORMAP
+	{
+		int p;
+		unsigned char	*colormap;
+		int flag[256],tmp[256];
+		j=1;
+		colormap=(unsigned char *)malloc(ROWS*COLS);
+		for(i=0;i<=255;i++)
+		{
+			flag[i]=0;
+			tmp[i]=0;
+		}
+		for( i=0;i<=ROWS*COLS;i++)
+		{
+			p=image[i];
+			if(flag[p]==0)
+			{
+				flag[p]=j;
+				colormap[i]=j;
+				tmp[j-1]=p;
+				j++;
+			}
+			else if(flag[p]!=0)
+			{
+				colormap[i]=flag[p];
+			}
+			k=colormap[i];
+			displaydata[i]=tmp[k-1];
+			//b=colormap[i];
+		}
+	}
+	else if(header[1]=='6')//24 BIT RGB TO 16 BIT RGB
+	{
+		j=0;
+		for(i=0;i<ROWS*COLS*3;i=i+3)
+		{
+			int r,g,b;
+			r=image[i];
+			g=image[i+1];
+			b=image[i+2];
+
+			displaydata[j+1]=((r>>3)<<2) | (g>>6);
+			displaydata[j]=((g>>3)<<5)|(b>>3);
+			j=j+2;
+
+
+		}
+	}
+
+	wc.style=CS_HREDRAW | CS_VREDRAW;
+	wc.lpfnWndProc=(WNDPROC)EventProcessor;
+	wc.cbClsExtra=wc.cbWndExtra=0;
+	wc.hInstance=hInstance;
+	wc.hIcon=NULL;
+	wc.lpszMenuName=NULL;
+	wc.hCursor=LoadCursor(NULL,IDC_ARROW);
+	wc.hbrBackground=(HBRUSH)(COLOR_WINDOW+1);
+	wc.lpszClassName=L"Image Window Class";
+	if (RegisterClass(&wc) == 0)
+		exit(0);
+
+	WindowHandle=CreateWindow(L"Image Window Class",L"ECE468 Lab1",
+		WS_OVERLAPPEDWINDOW,
+		10,10,COLS,ROWS,
+		NULL,NULL,hInstance,NULL);
+	if (WindowHandle == NULL)
+	{
+		MessageBox(NULL,L"No window",L"Try again",MB_OK | MB_APPLMODAL);
+		exit(0);
+	}
+	ShowWindow (WindowHandle, SW_SHOWMAXIMIZED);
+
+	bm_info=(BITMAPINFO *)calloc(1,sizeof(BITMAPINFO) + 256*sizeof(RGBQUAD));
+	hDC=GetDC(WindowHandle);
+
+
+
+	/* ... set up bmiHeader field of bm_info ... */
+	
+	if(header[1]=='5')//8 BIT GREYSCALE TO 8 BIT COLORMAP
+	{
+	bm_info->bmiHeader.biBitCount=8;
+	}
+	if(header[1]=='6')//8 BIT GREYSCALE TO 8 BIT COLORMAP
+	{
+	bm_info->bmiHeader.biBitCount=16;
+	}
+
+	bm_info->bmiHeader.biWidth=COLS;
+	bm_info->bmiHeader.biHeight=-ROWS;
+	bm_info->bmiHeader.biPlanes=1;
+	bm_info->bmiHeader.biCompression=BI_RGB;
+	bm_info->bmiHeader.biSizeImage=0;
+	bm_info->bmiHeader.biXPelsPerMeter=0;
+	bm_info->bmiHeader.biYPelsPerMeter=0;
+	bm_info->bmiHeader.biClrUsed=0;
+	bm_info->bmiHeader.biClrImportant=0;
+	bm_info->bmiHeader.biSize=sizeof (BITMAPINFOHEADER);
+
+
+	for ( i=0; i<256; i++)	/* colormap */
+	{
+		bm_info->bmiColors[i].rgbBlue=bm_info->bmiColors[i].rgbGreen=bm_info->bmiColors[i].rgbRed=i;
+		bm_info->bmiColors[i].rgbReserved=0;
+	} 
+
+
+	SetDIBitsToDevice(hDC,0,0,COLS,ROWS,0,0,
+		0, /* first scan line */
+		ROWS, /* number of scan lines */
+		displaydata,bm_info,DIB_RGB_COLORS);
+	ReleaseDC(WindowHandle,hDC);
+	free(bm_info);
+	MessageBox(NULL,L"Press OK to continue",L"",MB_OK | MB_APPLMODAL);
+	
+	
+}
