@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 	{
 	bm_info->bmiHeader.biBitCount=8;
 	}
-	if(header[1]=='6')//8 BIT GREYSCALE TO 8 BIT COLORMAP
+	if(header[1]=='6')//8 BIT GREYSCALE TO 16 BIT COLORMAP
 	{
 	bm_info->bmiHeader.biBitCount=16;
 	}
