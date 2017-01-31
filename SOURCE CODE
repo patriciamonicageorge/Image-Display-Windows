@@ -32,8 +32,6 @@ int main(int argc, char *argv[])
 	fpt=fopen(argv[1],"rb");
 	fscanf(fpt,"%s %d %d %d",header,&COLS,&ROWS,&BYTES);
 	printf("\n The image being displayed is %s. \n ROWS: %d \n COLUMNS: %d\n",argv[1],ROWS,COLS);
-
-	
 	if(header[1]=='5')//8 BIT GREYSCALE TO 8 BIT COLORMAP
 	{
 	image=(unsigned char *)malloc(ROWS*COLS);
@@ -49,8 +47,6 @@ int main(int argc, char *argv[])
 	displaydata=(unsigned char *)malloc(ROWS*COLS*2*sizeof(unsigned char*));
 	}
 	fclose(fpt);
-
-
 	if(header[1]=='5')//8 BIT GREYSCALE TO 8 BIT COLORMAP
 	{
 		int p;
@@ -95,11 +91,8 @@ int main(int argc, char *argv[])
 			displaydata[j+1]=((r>>3)<<2) | (g>>6);
 			displaydata[j]=((g>>3)<<5)|(b>>3);
 			j=j+2;
-
-
 		}
 	}
-
 	wc.style=CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc=(WNDPROC)EventProcessor;
 	wc.cbClsExtra=wc.cbWndExtra=0;
@@ -111,7 +104,6 @@ int main(int argc, char *argv[])
 	wc.lpszClassName=L"Image Window Class";
 	if (RegisterClass(&wc) == 0)
 		exit(0);
-
 	WindowHandle=CreateWindow(L"Image Window Class",L"ECE468 Lab1",
 		WS_OVERLAPPEDWINDOW,
 		10,10,COLS,ROWS,
@@ -125,8 +117,6 @@ int main(int argc, char *argv[])
 
 	bm_info=(BITMAPINFO *)calloc(1,sizeof(BITMAPINFO) + 256*sizeof(RGBQUAD));
 	hDC=GetDC(WindowHandle);
-
-
 
 	/* ... set up bmiHeader field of bm_info ... */
 	
@@ -150,13 +140,11 @@ int main(int argc, char *argv[])
 	bm_info->bmiHeader.biClrImportant=0;
 	bm_info->bmiHeader.biSize=sizeof (BITMAPINFOHEADER);
 
-
 	for ( i=0; i<256; i++)	/* colormap */
 	{
 		bm_info->bmiColors[i].rgbBlue=bm_info->bmiColors[i].rgbGreen=bm_info->bmiColors[i].rgbRed=i;
 		bm_info->bmiColors[i].rgbReserved=0;
 	} 
-
 
 	SetDIBitsToDevice(hDC,0,0,COLS,ROWS,0,0,
 		0, /* first scan line */
@@ -164,7 +152,5 @@ int main(int argc, char *argv[])
 		displaydata,bm_info,DIB_RGB_COLORS);
 	ReleaseDC(WindowHandle,hDC);
 	free(bm_info);
-	MessageBox(NULL,L"Press OK to continue",L"",MB_OK | MB_APPLMODAL);
-	
-	
+	MessageBox(NULL,L"Press OK to continue",L"",MB_OK | MB_APPLMODAL);	
 }
